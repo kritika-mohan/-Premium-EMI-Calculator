@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account — FinCalc PRO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #EDE8FF 0%, #DDD5FF 40%, #E8DCFF 100%);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .wrapper {
+            display: flex;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 860px;
+            align-items: stretch;
+        }
+
+        /* ── LEFT CARD ── */
+        .left-card {
+            flex: 1;
+            background: rgba(255,255,255,.55);
+            border: 1px solid rgba(255,255,255,.9);
+            border-radius: 28px;
+            padding: 2.5rem 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 1.2rem;
+            backdrop-filter: blur(20px);
+            animation: fade-up .5s cubic-bezier(.22,1,.36,1) both;
+        }
+        @media(max-width: 680px) { .left-card { display: none; } }
+
+        .brand-name {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.9rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #7C3AED, #9B5CF6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-copy h2 {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.55rem;
+            font-weight: 800;
+            color: #1A1340;
+            line-height: 1.3;
+            margin-bottom: .6rem;
+        }
+        .brand-copy p { color: #5B5490; font-size: .92rem; line-height: 1.6; }
+
+        .feat-list { display: flex; flex-direction: column; gap: .65rem; margin-top: .5rem; }
+        .feat-item {
+            display: flex; align-items: center; gap: .75rem;
+            background: rgba(255,255,255,.65);
+            border: 1px solid rgba(124,58,237,.1);
+            border-radius: 12px;
+            padding: .75rem 1rem;
+        }
+        .feat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .feat-dot.v { background: #7C3AED; }
+        .feat-dot.m { background: #2DD4BF; }
+        .feat-dot.c { background: #FF8A5B; }
+        .feat-item span { font-size: .88rem; font-weight: 500; color: #3D3870; }
+
+        /* ── RIGHT CARD ── */
+        .right-card {
+            flex: 0 0 380px;
+            background: rgba(255,255,255,.75);
+            border: 1px solid rgba(255,255,255,.95);
+            border-radius: 28px;
+            padding: 2.5rem 2rem;
+            backdrop-filter: blur(20px);
+            animation: fade-up .5s .1s cubic-bezier(.22,1,.36,1) both;
+        }
+        @media(max-width: 680px) { .right-card { flex: 0 0 100%; } }
+
+        @keyframes fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+
+        .card-title { font-family: 'Sora', sans-serif; font-size: 1.65rem; font-weight: 800; color: #1A1340; margin-bottom: .35rem; }
+        .card-sub { color: #7870A8; font-size: .88rem; margin-bottom: 1.6rem; }
+
+        .field { margin-bottom: .9rem; }
+        .field input {
+            width: 100%;
+            background: rgba(255,255,255,.8);
+            border: 1.5px solid rgba(124,58,237,.15);
+            border-radius: 12px;
+            color: #1A1340;
+            font-family: 'Inter', sans-serif;
+            font-size: .95rem;
+            font-weight: 500;
+            padding: .85rem 1.1rem;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s, background .2s;
+        }
+        .field input::placeholder { color: #B4ADE0; }
+        .field input:focus {
+            border-color: #7C3AED;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(124,58,237,.14);
+        }
+
+        .btn-main {
+            width: 100%; margin-top: .5rem;
+            padding: .95rem;
+            background: linear-gradient(135deg, #7C3AED, #9B5CF6);
+            border: none; border-radius: 50px;
+            color: #fff;
+            font-family: 'Sora', sans-serif;
+            font-size: .95rem; font-weight: 700;
+            cursor: pointer; position: relative; overflow: hidden;
+            transition: transform .2s, box-shadow .2s, opacity .2s;
+            box-shadow: 0 6px 24px rgba(124,58,237,.35);
+        }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(124,58,237,.45); }
+        .btn-main:active { transform: scale(.97); }
+        .btn-main:disabled { opacity: .65; cursor: not-allowed; transform: none; }
+
+        .footer { margin-top: 1.5rem; text-align: center; color: #8B7EC8; font-size: .85rem; }
+        .footer a { color: #7C3AED; font-weight: 600; text-decoration: none; }
+        .footer a:hover { color: #FF8A5B; }
+
+        .msg { margin-top: .85rem; padding: .75rem 1rem; border-radius: 10px; font-size: .85rem; font-weight: 500; display: none; line-height: 1.5; }
+        .msg.error { display: block; background: rgba(220,38,38,.08); border: 1px solid rgba(220,38,38,.2); color: #DC2626; }
+        .msg.success { display: block; background: rgba(45,212,191,.1); border: 1px solid rgba(45,212,191,.3); color: #0D9488; }
+
+        .ripple-span {
+            position: absolute; border-radius: 50%; background: rgba(255,255,255,.3);
+            transform: scale(0); animation: rpl .5s linear; pointer-events: none;
+        }
+        @keyframes rpl { to { transform: scale(4); opacity: 0; } }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+
+    <!-- LEFT CARD -->
+    <div class="left-card">
+        <div class="brand-name">FinCalc</div>
+
+        <div class="brand-copy">
+            <h2>Join the revolution.</h2>
+            <p>Register securely to unlock personalized saving capabilities and intelligent loan insights.</p>
+        </div>
+
+        <div class="feat-list">
+            <div class="feat-item">
+                <div class="feat-dot v"></div>
+                <span>Real-time EMI calculation</span>
+            </div>
+            <div class="feat-item">
+                <div class="feat-dot m"></div>
+                <span>Save & compare loan scenarios</span>
+            </div>
+            <div class="feat-item">
+                <div class="feat-dot c"></div>
+                <span>Export PDF repayment schedules</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT CARD (FORM) -->
+    <div class="right-card">
+        <h1 class="card-title">Create Account</h1>
+        <p class="card-sub">Get started with your personalized dashboard.</p>
+
+        <form id="signup-form" novalidate>
+            <div class="field">
+                <input type="text" id="name" placeholder="Full Name" required autocomplete="name">
+            </div>
+            <div class="field">
+                <input type="email" id="email" placeholder="Email Address" required autocomplete="email">
+            </div>
+            <div class="field">
+                <input type="password" id="password" placeholder="Password (min. 6 chars)" required autocomplete="new-password">
+            </div>
+
+            <div class="msg" id="msg"></div>
+
+            <button type="submit" class="btn-main" id="submit-btn">Create Account</button>
+        </form>
+
+        <div class="footer">
+            Already have an account? <a href="login.html">Log in</a>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    const supabase = window.supabaseClient;
+    const msgEl   = document.getElementById('msg');
+    const btn     = document.getElementById('submit-btn');
+    const form    = document.getElementById('signup-form');
+
+    function showMsg(t, type) { msgEl.textContent = t; msgEl.className = 'msg ' + type; }
+    function hideMsg() { msgEl.className = 'msg'; }
+
+    // Ripple
+    btn.addEventListener('click', function(e) {
+        const c = document.createElement('span');
+        const d = Math.max(this.clientWidth, this.clientHeight);
+        const r = this.getBoundingClientRect();
+        c.className = 'ripple-span';
+        c.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;
+        this.querySelector('.ripple-span')?.remove();
+        this.appendChild(c);
+    });
+
+    // Check if already logged in
+    if (supabase) {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) { window.location.href = 'index.html'; return; }
+        } catch(e) {}
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideMsg();
+        if (!supabase) { showMsg('Supabase not configured.', 'error'); return; }
+
+        const name     = document.getElementById('name').value.trim();
+        const email    = document.getElementById('email').value.trim().toLowerCase();
+        const password = document.getElementById('password').value;
+
+        if (!name)              { showMsg('Please enter your full name.', 'error'); return; }
+        if (!email)             { showMsg('Please enter your email address.', 'error'); return; }
+        if (password.length < 6) { showMsg('Password must be at least 6 characters.', 'error'); return; }
+
+        btn.textContent = 'Creating account…';
+        btn.disabled = true;
+
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: { data: { full_name: name } }
+        });
+
+        btn.textContent = 'Create Account';
+        btn.disabled = false;
+
+        if (error) { showMsg(error.message, 'error'); return; }
+
+        if (!data.session) {
+            showMsg('✓ Account created! Please check your email and click the confirmation link to activate your account, then log in.', 'success');
+            form.reset();
+            return;
+        }
+
+        // Logged in immediately (email confirm disabled in Supabase)
+        window.location.href = 'index.html';
+    });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinCalc PRO — Premium EMI Calculator</title>
+    <meta name="description" content="Calculate, compare & export your loan EMI. Smart insights, beautiful UI.">
+    <script>
+        try {
+            const t = localStorage.getItem('emi-theme');
+            if (t) document.documentElement.setAttribute('data-theme', t);
+            else if (window.matchMedia('(prefers-color-scheme: light)').matches) document.documentElement.setAttribute('data-theme', 'light');
+        } catch(_) {}
+    </script>
+    <!-- Auth guard: redirect to login if not signed in -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script>
+        (async () => {
+            try {
+                // Allow guests who clicked "Continue as Guest"
+                if (sessionStorage.getItem('emi-guest')) return;
+                const sb = window.supabaseClient;
+                if (!sb) return;
+                const { data: { session } } = await sb.auth.getSession();
+                if (!session) window.location.href = 'login.html';
+            } catch(_) {}
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- Canvas layers -->
+    <canvas id="particles-canvas" aria-hidden="true"></canvas>
+    <canvas id="confetti-canvas" aria-hidden="true"></canvas>
+    <div class="noise-overlay" aria-hidden="true"></div>
+
+    <!-- Ambient blobs -->
+    <div class="background-blobs" aria-hidden="true">
+        <div class="blob-wrapper"><div class="blob blob-violet"></div></div>
+        <div class="blob-wrapper"><div class="blob blob-coral"></div></div>
+        <div class="blob-wrapper"><div class="blob blob-mint"></div></div>
+    </div>
+
+    <!-- Saved Scenarios Drawer -->
+    <div class="saved-drawer" id="saved-drawer" role="dialog" aria-modal="true" aria-label="Saved Scenarios">
+        <div class="drawer-header">
+            <h3>Saved Scenarios</h3>
+            <button id="btn-close-drawer" class="btn-icon" aria-label="Close">&#10005;</button>
+        </div>
+        <div class="drawer-content" id="saved-list"></div>
+    </div>
+    <div class="drawer-backdrop" id="drawer-backdrop"></div>
+
+    <!-- Navigation -->
+    <header class="top-nav animate-in" style="--delay:0s">
+        <div class="nav-content">
+            <div class="logo-group">
+                <h1 class="logo">FinCalc</h1>
+                <span class="logo-badge">PRO</span>
+            </div>
+            <nav class="nav-actions">
+                <span class="user-greeting" id="user-greeting"></span>
+                <button type="button" id="btn-compare" class="btn-nav ripple-btn" aria-label="Compare Loans">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg>
+                    Compare
+                </button>
+                <button type="button" id="btn-saved" class="btn-nav ripple-btn" aria-label="Saved Scenarios">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    Saved
+                </button>
+                <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Toggle theme">
+                    <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-14.07 1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2m-4.93-7.07-1.41 1.41M6.34 17.66l-1.41 1.41"/></svg>
+                    <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                    <span class="toggle-knob"></span>
+                </button>
+                <button type="button" id="btn-logout" class="btn-nav btn-nav-danger ripple-btn">Log Out</button>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- ── MAIN CALCULATOR GRID ── -->
+        <div class="container">
+
+            <!-- Calculator Input Card -->
+            <div class="calculator-card glass-panel card-hover animate-in" style="--delay:0.1s">
+                <div class="card-title-row">
+                    <h2 class="card-title">EMI Calculator</h2>
+                    <div class="live-badge">
+                        <span class="live-dot"></span>Live
+                    </div>
+                </div>
+
+                <div class="presets">
+                    <button type="button" class="preset-chip ripple-btn" data-preset="home">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        Home
+                    </button>
+                    <button type="button" class="preset-chip ripple-btn" data-preset="car">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="8" x="3" y="10" rx="2"/><path d="M7 10V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4"/><circle cx="7.5" cy="18.5" r="1.5"/><circle cx="16.5" cy="18.5" r="1.5"/></svg>
+                        Car
+                    </button>
+                    <button type="button" class="preset-chip ripple-btn" data-preset="personal">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                        Personal
+                    </button>
+                    <button type="button" class="preset-chip ripple-btn" data-preset="education">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                        Education
+                    </button>
+                </div>
+
+                <div class="inputs-section">
+                    <div class="input-group">
+                        <div class="input-header">
+                            <label for="amount-number">Loan Amount (₹)</label>
+                            <input type="number" id="amount-number" class="glow-input" min="10000" max="20000000" value="500000">
+                        </div>
+                        <div class="slider-wrapper">
+                            <div class="slider-tooltip" id="amount-tooltip"><span></span></div>
+                            <input type="range" id="amount-slider" min="10000" max="20000000" step="10000" value="500000">
+                        </div>
+                        <div class="range-labels"><span>₹10K</span><span>₹2Cr</span></div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-header">
+                            <label for="rate-number">Annual Interest Rate (%)</label>
+                            <input type="number" id="rate-number" class="glow-input" min="1" max="30" step="0.1" value="9.5">
+                        </div>
+                        <div class="slider-wrapper">
+                            <div class="slider-tooltip" id="rate-tooltip"><span></span></div>
+                            <input type="range" id="rate-slider" min="1" max="30" step="0.1" value="9.5">
+                        </div>
+                        <div class="range-labels"><span>1%</span><span>30%</span></div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-header">
+                            <label for="tenure-number">Tenure</label>
+                            <div class="tenure-controls">
+                                <input type="number" id="tenure-number" class="glow-input" min="1" max="360" value="60">
+                                <div class="toggle-group">
+                                    <input type="radio" id="toggle-yr" name="tenure-unit" value="yr">
+                                    <label for="toggle-yr">Yr</label>
+                                    <input type="radio" id="toggle-mo" name="tenure-unit" value="mo" checked>
+                                    <label for="toggle-mo">Mo</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slider-wrapper">
+                            <div class="slider-tooltip" id="tenure-tooltip"><span></span></div>
+                            <input type="range" id="tenure-slider" min="1" max="360" step="1" value="60">
+                        </div>
+                        <div class="range-labels"><span>1 <span class="tenure-label-text">Mo</span></span><span>360 <span class="tenure-label-text">Mo</span></span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Card -->
+            <div class="results-card glass-panel card-hover animate-in" style="--delay:0.2s">
+                <h2 class="sr-only">Calculation Results</h2>
+
+                <div class="emi-display">
+                    <span class="emi-label">Monthly EMI</span>
+                    <div class="emi-value-wrapper">
+                        <div class="emi-value" aria-live="polite" id="emi-container">
+                            ₹<span id="emi-result" class="odometer">0</span>
+                        </div>
+                        <div class="emi-tick" id="emi-tick" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <svg viewBox="0 0 160 160" class="donut-chart" aria-label="Principal and Interest">
+                        <circle class="donut-track" cx="80" cy="80" r="70"/>
+                        <circle class="donut-progress" id="donut-arc" cx="80" cy="80" r="70" stroke-dasharray="0 440"/>
+                    </svg>
+                    <div class="chart-center">
+                        <span class="chart-center-label">Total Cost</span>
+                        <span id="total-payment" class="chart-center-val odometer-small">₹0</span>
+                    </div>
+                </div>
+
+                <div class="breakdown-rows">
+                    <div class="breakdown-row">
+                        <div class="row-label"><span class="dot mint"></span>Principal</div>
+                        <div id="principal-amount" class="row-val odometer-small">₹0</div>
+                    </div>
+                    <div class="breakdown-row">
+                        <div class="row-label"><span class="dot coral"></span>Total Interest</div>
+                        <div id="total-interest" class="row-val odometer-small">₹0</div>
+                    </div>
+                </div>
+
+                <!-- Smart Insights -->
+                <div class="insights-panel" id="insights-panel">
+                    <div class="insights-header">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 22V12m0-10v4M4.93 10.93l2.83 2.83M16.24 13.76l2.83 2.83M2 18h4M18 18h4M4.93 13.07l2.83-2.83M16.24 10.24l2.83-2.83"/></svg>
+                        Smart Insights
+                    </div>
+                    <div class="insights-grid" id="insights-grid"></div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="action-rows">
+                    <button type="button" class="btn-primary ripple-btn magnetic-btn" id="btn-save-calc">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        Save Scenario
+                    </button>
+                    <button type="button" class="btn-outline ripple-btn" id="btn-export-pdf">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Export PDF
+                    </button>
+                </div>
+
+                <!-- Schedule Toggle -->
+                <div class="schedule-section">
+                    <button type="button" class="btn-schedule ripple-btn" id="btn-toggle-schedule" aria-expanded="false" aria-controls="schedule-container">
+                        Month-by-Month Schedule
+                        <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="schedule-container" id="schedule-container" aria-hidden="true">
+                        <div class="table-wrapper">
+                            <table id="schedule-table">
+                                <thead><tr><th>Month</th><th>EMI</th><th>Principal</th><th>Interest</th><th>Balance</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── COMPARE LOANS SECTION ── -->
+        <section class="compare-section" id="compare-section" aria-hidden="true">
+            <div class="compare-header-row">
+                <div>
+                    <h2 class="compare-title">📊 Loan Comparison</h2>
+                    <p class="compare-subtitle">Adjust Loan 2 to see which is the better deal</p>
+                </div>
+                <button type="button" id="btn-close-compare" class="btn-icon-pill ripple-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    Close
+                </button>
+            </div>
+
+            <div class="compare-grid">
+                <!-- Loan 1 (live synced) -->
+                <div class="compare-card glass-panel">
+                    <span class="compare-badge badge-violet">Loan 1 · Current</span>
+                    <div class="compare-emi" id="c1-emi">₹—</div>
+                    <div class="compare-stat"><span>Principal</span><strong id="c1-principal">—</strong></div>
+                    <div class="compare-stat"><span>Rate</span><strong id="c1-rate">—</strong></div>
+                    <div class="compare-stat"><span>Tenure</span><strong id="c1-tenure">—</strong></div>
+                    <hr class="compare-divider">
+                    <div class="compare-stat"><span>Total Interest</span><strong id="c1-interest" class="highlight-coral">—</strong></div>
+                    <div class="compare-stat"><span>Total Payment</span><strong id="c1-total">—</strong></div>
+                </div>
+
+                <!-- Loan 2 (editable) -->
+                <div class="compare-card glass-panel">
+                    <span class="compare-badge badge-coral">Loan 2 · Compare</span>
+                    <div class="compare-inputs">
+                        <div class="compare-field">
+                            <label>Principal (₹)</label>
+                            <input type="number" id="c2-amount" class="glow-input compare-glow-input" value="500000">
+                        </div>
+                        <div class="compare-field">
+                            <label>Rate (%)</label>
+                            <input type="number" id="c2-rate" class="glow-input compare-glow-input" value="8.5" step="0.1">
+                        </div>
+                        <div class="compare-field">
+                            <label>Tenure (months)</label>
+                            <input type="number" id="c2-tenure" class="glow-input compare-glow-input" value="60">
+                        </div>
+                    </div>
+                    <div class="compare-emi" id="c2-emi">₹—</div>
+                    <hr class="compare-divider">
+                    <div class="compare-stat"><span>Total Interest</span><strong id="c2-interest" class="highlight-coral">—</strong></div>
+                    <div class="compare-stat"><span>Total Payment</span><strong id="c2-total">—</strong></div>
+                </div>
+
+                <!-- Winner -->
+                <div class="compare-card compare-winner glass-panel" id="compare-winner-card">
+                    <div id="winner-content" class="winner-placeholder">
+                        <div class="winner-icon-wrap">🔍</div>
+                        <p>Fill in both loans to see the winner</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer animate-in" style="--delay:0.35s">
+        <a href="https://digitalheroesco.com" target="_blank" rel="noopener" class="btn-digital-heroes">Built for Digital Heroes</a>
+        <p class="footer-credit">Built by Kritika Mohan · <a href="mailto:kritikamohan2005@gmail.com">kritikamohan2005@gmail.com</a></p>
+    </footer>
+
+    <!-- Scripts already loaded in <head>, just load the app -->
+    <script src="script.js"></script>
+</body>
+</html>
