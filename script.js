@@ -687,7 +687,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (el.drawer.classList.contains('open')) fetchCalculations();
         } catch (err) {
             console.error("Error saving:", err);
-            showToast('Error saving data', 'error');
+            // Display the specific error message from Supabase to help with debugging
+            const errorMsg = err.message || 'Error saving data';
+            showToast(errorMsg, 'error');
             el.btnSave.innerHTML = orig;
             el.btnSave.disabled = false;
         }
