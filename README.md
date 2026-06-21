@@ -34,4 +34,4 @@ Where:
 *Note: If the interest rate is 0%, the formula used is `EMI = P / n`.*
 
 ---
-Built by Kritika Mohan — kritikamohan2005@gmail.com
+Built by Kritika Mohan
