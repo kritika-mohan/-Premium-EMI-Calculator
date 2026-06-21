@@ -579,12 +579,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
         
         try {
-            // If we have a user, only fetch their records (if RLS isn't doing it automatically).
-            // For safety and generic schema support, we just fetch all and let RLS handle security.
-            const query = supabase.from('calculations').select('*').order('created_at', { ascending: false });
-            if (currentUserId) query.eq('user_id', currentUserId);
-
-            const { data, error } = await query;
+            // Fetch all records — RLS policies on the Supabase side handle per-user access.
+            // (The calculations table does not have a user_id column.)
+            const { data, error } = await supabase
+                .from('calculations')
+                .select('*')
+                .order('created_at', { ascending: false });
             if (error) throw error;
             
             displayCalculations(data);
@@ -674,7 +674,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 total_interest: state.results.interest,
                 total_payment: state.results.total
             };
-            if (currentUserId) insertData.user_id = currentUserId;
+            // Note: user_id column does not exist in this table; access is managed via RLS.
 
             const { error } = await supabase.from('calculations').insert([insertData]);
             if (error) throw error;
